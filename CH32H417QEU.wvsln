@@ -1,0 +1,11 @@
+{
+	"version": "1.0",
+	"projects": [
+		{
+			"path": "V3F/CH32H417QEU_V3F.wvproj"
+		},
+		{
+			"path": "V5F/CH32H417QEU_V5F.wvproj"
+		}
+	]
+}
