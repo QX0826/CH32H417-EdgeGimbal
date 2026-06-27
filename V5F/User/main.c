@@ -241,9 +241,9 @@ int main(void)
     /* 不使用printf，避免串口冲突 */
 
     /* 初始位置 */
-    Servo_Set_Angle(SERVO_X, 90);
-    Servo_Set_Angle(SERVO_Y, 90);
-    Servo_Set_Angle(SERVO_Z, 40);
+    Servo_Set_Angle(SERVO_X, 75);
+    Servo_Set_Angle(SERVO_Y, 175);
+    Servo_Set_Angle(SERVO_Z, 50);
 
     /* 启动提示 */
     Beep_Beep(100);

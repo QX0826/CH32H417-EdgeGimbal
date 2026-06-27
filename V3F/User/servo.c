@@ -13,12 +13,12 @@
 #include <stdlib.h>
 
 /* 全局变量 */
-int current_angle[SERVO_COUNT] = {70, 175, 50};
-int target_angle[SERVO_COUNT]  = {70, 175, 50};
+float current_angle[SERVO_COUNT] = {75.0f, 175.0f, 50.0f};
+float target_angle[SERVO_COUNT]  = {75.0f, 175.0f, 50.0f};
 
 /* 各轴舵机的物理边界约束 */
-static const int servo_min[SERVO_COUNT] = {SERVO_X_MIN, SERVO_Y_MIN, SERVO_Z_MIN};
-static const int servo_max[SERVO_COUNT] = {SERVO_X_MAX, SERVO_Y_MAX, SERVO_Z_MAX};
+static const float servo_min[SERVO_COUNT] = {SERVO_X_MIN, SERVO_Y_MIN, SERVO_Z_MIN};
+static const float servo_max[SERVO_COUNT] = {SERVO_X_MAX, SERVO_Y_MAX, SERVO_Z_MAX};
 
 /* 平滑移动阈值 */
 #define STEP_LARGE_THRESHOLD   20
@@ -55,21 +55,20 @@ void Servo_PWM_Init(void)
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_Very_High;
     GPIO_Init(GPIOA, &GPIO_InitStructure);
 
-    /* 定时器基础配置
-     * TIM2是16位定时器，ARR最大65535
-     * 400MHz / 800 / 1000 = 50Hz
-     * pulse范围: 50(0.5ms) ~ 250(2.5ms)，步进精度 10us */
-    TIM_TimeBaseStructure.TIM_Period = 1000 - 1;
-    TIM_TimeBaseStructure.TIM_Prescaler = 800 - 1;
+    /* 定时器基础配置 (等价的 100Hz 频率，20000 周期 ARR，40 分频 PSC，提供 4000 级高分辨率 PWM 控制)
+     * TIM2是32位定时器
+     * pulse范围: 1000(0.5ms) ~ 5000(2.5ms) */
+    TIM_TimeBaseStructure.TIM_Period = 20000 - 1;
+    TIM_TimeBaseStructure.TIM_Prescaler = 40 - 1;
     TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;
     TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
     TIM_TimeBaseInit(TIM2, &TIM_TimeBaseStructure);
 
     /* PWM模式配置
-     * 1.5ms中位 = 75 / 1000 * 20ms = 1.5ms */
+     * 1.5ms中位 = 1500 / 20000 * 20ms = 1.5ms */
     TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
     TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-    TIM_OCInitStructure.TIM_Pulse = 75;
+    TIM_OCInitStructure.TIM_Pulse = 1500;
     TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
 
     TIM_OC1Init(TIM2, &TIM_OCInitStructure);  /* X轴 */
@@ -94,7 +93,7 @@ void Servo_PWM_Init(void)
  *
  * @return  none
  */
-void Servo_Set_Angle(Servo_Channel ch, uint16_t angle)
+void Servo_Set_Angle(Servo_Channel ch, float angle)
 {
     if(ch == SERVO_Y)
     {
@@ -109,8 +108,8 @@ void Servo_Set_Angle(Servo_Channel ch, uint16_t angle)
         if(angle > SERVO_Z_MAX) angle = SERVO_Z_MAX;
     }
 
-    /* 角度 → 脉宽: 50(0.5ms) ~ 250(2.5ms) */
-    uint32_t pulse = 50 + (uint32_t)angle * 200 / 180;
+    /* 角度 → 脉宽: 1000(0.5ms) ~ 5000(2.5ms)，高精度细分，舵机精度是 0.5度，PWM细分可达 0.045度 */
+    uint32_t pulse = 1000 + (uint32_t)(angle * 4000.0f / 180.0f);
 
     switch(ch)
     {
@@ -133,15 +132,15 @@ void smooth_move_servos(void)
     int i;
     for(i = 0; i < SERVO_COUNT; i++)
     {
-        int error = target_angle[i] - current_angle[i];
-        int step;
+        float error = target_angle[i] - current_angle[i];
+        float step;
 
-        if(abs(error) > STEP_LARGE_THRESHOLD)
-            step = error / 2;       /* 快速追赶 */
-        else if(abs(error) > STEP_MEDIUM_THRESHOLD)
-            step = error / 3;       /* 中速 */
+        if(fabs(error) > STEP_LARGE_THRESHOLD)
+            step = error / 2.0f;       /* 快速追赶 */
+        else if(fabs(error) > STEP_MEDIUM_THRESHOLD)
+            step = error / 3.0f;       /* 中速 */
         else
-            step = (error != 0) ? (error > 0 ? 1 : -1) : 0;  /* 微调 */
+            step = (error != 0.0f) ? (error > 0.0f ? 0.1f : -0.1f) : 0.0f;  /* 微调 */
 
         current_angle[i] += step;
         current_angle[i] = CONSTRAIN(current_angle[i], servo_min[i], servo_max[i]);
@@ -168,34 +167,34 @@ void V5F_ProcessSharedData(void)
         switch(cmd)
         {
             case CMD_X_PLUS:    
-                target_angle[0] += 5; 
+                target_angle[0] += 5.0f; 
                 send_voice_feedback('3');
                 break;
             case CMD_X_MINUS:   
-                target_angle[0] -= 5; 
+                target_angle[0] -= 5.0f; 
                 send_voice_feedback('4');
                 break;
             case CMD_Y_PLUS:    
-                target_angle[1] += 5; 
+                target_angle[1] += 5.0f; 
                 send_voice_feedback('5');
                 break;
             case CMD_Y_MINUS:   
-                target_angle[1] -= 5; 
+                target_angle[1] -= 5.0f; 
                 send_voice_feedback('6');
                 break;
             case CMD_TRACK_ON:
-                target_angle[0] = 70;
+                target_angle[0] = 75;
                 target_angle[1] = 175;
                 target_angle[2] = 50;
                 gimbal_shared.tracking_mode = 1;
                 send_voice_feedback('9');
                 break;
             case CMD_Z_PLUS:    
-                target_angle[2] += 5; 
+                target_angle[2] += 5.0f; 
                 send_voice_feedback('7');
                 break;
             case CMD_Z_MINUS:   
-                target_angle[2] -= 5; 
+                target_angle[2] -= 5.0f; 
                 send_voice_feedback('8');
                 break;
             case CMD_STOP:
@@ -216,16 +215,16 @@ void V5F_ProcessSharedData(void)
     /* 人脸 */
     if(gimbal_shared.face_ready && gimbal_shared.tracking_mode)
     {
-        int16_t fx = gimbal_shared.face_x;
-        int16_t fy = gimbal_shared.face_y;
+        float fx = gimbal_shared.face_x / 10.0f;
+        float fy = gimbal_shared.face_y / 10.0f;
 
         target_angle[0] = CONSTRAIN(fx, SERVO_X_MIN, SERVO_X_MAX);
         target_angle[1] = CONSTRAIN(fy, SERVO_Y_MIN, SERVO_Y_MAX);
 
-        /* Z轴协同：以实际中心位置归一化（X中心=70，Y中心=175，Z初始=50） */
-        float norm_x = (fx - 70) / 40.0f;    /* X范围50~110，以70为中心，半幅=40 */
-        float norm_y = (fy - 175) / 85.0f;   /* Y范围110~260，以175为中心，半幅=85 */
-        int z_comp = (int)(50 + norm_x * 8.0f + norm_y * 5.0f);
+        /* Z轴协同：以实际中心位置归一化（X中心=75，Y中心=175，Z初始=50） */
+        float norm_x = (fx - 75.0f) / 35.0f;    /* X范围40~110，以75为中心，半幅=35 */
+        float norm_y = (fy - 175.0f) / 85.0f;   /* Y范围110~260，以175为中心，半幅=85 */
+        float z_comp = 50.0f + norm_x * 8.0f + norm_y * 5.0f;
         target_angle[2] = CONSTRAIN(z_comp, SERVO_Z_MIN, SERVO_Z_MAX);
 
         gimbal_shared.face_ready = 0;

@@ -13,8 +13,8 @@
 /* 舵机PWM初始化 (TIM2 CH1/CH2/CH3, 50Hz) */
 void Servo_PWM_Init(void);
 
-/* 设置舵机角度 (0-180°) */
-void Servo_Set_Angle(Servo_Channel ch, uint8_t angle);
+/* 设置舵机角度 (0-180.0°) */
+void Servo_Set_Angle(Servo_Channel ch, float angle);
 
 /* 平滑移动舵机 */
 void smooth_move_servos(void);
@@ -23,7 +23,7 @@ void smooth_move_servos(void);
 void V5F_ProcessSharedData(void);
 
 /* 全局变量 */
-extern int current_angle[SERVO_COUNT];
-extern int target_angle[SERVO_COUNT];
+extern float current_angle[SERVO_COUNT];
+extern float target_angle[SERVO_COUNT];
 
 #endif /* __SERVO_H */

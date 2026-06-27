@@ -217,7 +217,7 @@ int main(void)
     tft180_clear();
 
     /* 6. 初始位置 */
-    Servo_Set_Angle(SERVO_X, 70);
+    Servo_Set_Angle(SERVO_X, 75);
     Servo_Set_Angle(SERVO_Y, 175);
     Servo_Set_Angle(SERVO_Z, 50);
 

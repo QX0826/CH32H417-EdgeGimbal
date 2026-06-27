@@ -1,20 +1,24 @@
-# Ignore IDE and tool directories
-.claude/
-.mrs/
-.idea/
-.vscode/
-.venv/
-
-# Ignore MounRiver Studio build artifacts
+# MounRiver Studio / Eclipse build directories
 obj/
-V3F/obj/
-V5F/obj/
-
-# Common compiler outputs
+[Oo]bj/
+*[Oo]bj/
 *.o
 *.d
 *.elf
-*.hex
 *.bin
-*.map
+*.hex
 *.lst
+*.map
+*.su
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Local IDE configuration
+.claude/
+.idea/
+.mrs/
+V3F/.mrs/
+V5F/.mrs/
+word/

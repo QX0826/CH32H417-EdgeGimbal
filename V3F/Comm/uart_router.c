@@ -158,6 +158,33 @@ void usart3_parse_command(uint8_t c)
 }
 
 /*********************************************************************
+ * @fn      parse_float_manual
+ * @brief   手动解析正浮点数 (避免使用 stdlib 的 atof 以免触发嵌入式运行时库的 heap/lockup 崩溃)
+ */
+static float parse_float_manual(const char* s)
+{
+    float val = 0.0f;
+    while(*s == ' ' || *s == '\t') s++;
+    while(*s >= '0' && *s <= '9')
+    {
+        val = val * 10.0f + (*s - '0');
+        s++;
+    }
+    if(*s == '.')
+    {
+        s++;
+        float weight = 0.1f;
+        while(*s >= '0' && *s <= '9')
+        {
+            val += (*s - '0') * weight;
+            weight *= 0.1f;
+            s++;
+        }
+    }
+    return val;
+}
+
+/*********************************************************************
  * @fn      usart6_parse_face_coord
  * @brief   解析USART6收到的人脸坐标
  *          格式: "X,Y\n" 例如 "94,120\n"
@@ -170,21 +197,36 @@ void usart6_parse_face_coord(uint8_t c)
 
         if(face_rx_index > 0)
         {
-            int x = 0, y = 0;
-            int parsed = sscanf(face_rx_buf, "%d,%d", &x, &y);
+            float x = 0.0f, y = 0.0f;
+            int parsed = 0;
+            char* comma = strchr(face_rx_buf, ',');
+            if(comma)
+            {
+                *comma = '\0';
+                x = parse_float_manual(face_rx_buf);
+                y = parse_float_manual(comma + 1);
+                *comma = ','; // restore comma
+                parsed = 2;
+            }
+            else
+            {
+                x = parse_float_manual(face_rx_buf);
+                parsed = 1;
+            }
+
             if(parsed == 2)
             {
-                gimbal_shared.face_x = (int16_t)x;
-                gimbal_shared.face_y = (int16_t)y;
+                gimbal_shared.face_x = (int16_t)(x * 10.0f);
+                gimbal_shared.face_y = (int16_t)(y * 10.0f);
                 gimbal_shared.face_ready = 1;
             }
             else if(parsed == 1)
             {
                 /* 只有一个数字，说明是通过 COM10 (USART3) 复用通道发送过来的 PC 手势指令 */
-                if(x >= 0 && x <= 9)
+                if(x >= 0.0f && x <= 9.0f)
                 {
                     gimbal_shared.com_digit = (uint8_t)x;
-                    if(x <= 7)
+                    if(x <= 7.0f)
                     {
                         gimbal_shared.command = (uint8_t)x;
                         gimbal_shared.command_ready = 1;
