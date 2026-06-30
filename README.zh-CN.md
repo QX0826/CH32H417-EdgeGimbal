@@ -376,31 +376,62 @@ python Gesture_recognition.py
 
 ```text
 CH32H417-EdgeGimbal/
-├── Common/                         # 双核公共定义与库文件
+├── Common/                         # 双核共享数据结构、外设寄存器定义与系统启动文件
 │   ├── Common/
-│   │   ├── shared_gimbal.h         # 定义双核共享结构体 GimbalSharedData_t 与信号量 HSEM_ID0
-│   │   ├── shared_gimbal.c         # 将共享变量放置在链接段 .shared_data (起始地址 0x20178000)
-│   │   └── gimbal_types.h          # 规定舵机物理约束限幅与 PID 结构体类型
-│   └── Debug/                      # WCH 系统时钟定义与核心功能选择 (Run_Core 宏)
+│   │   ├── shared_gimbal.h         # 定义双核共享全局结构体 GimbalSharedData_t 与硬件自旋锁 HSEM ID
+│   │   ├── shared_gimbal.c         # 将共享全局变量 `gimbal_shared` 强制链接分配至共享内存段 `.shared_data`
+│   │   ├── gimbal_types.h          # 规定舵机物理角度限幅区间、传感器阈值常数与 PID 控制结构体
+│   │   ├── hardware.h              # HSEM 自旋锁加锁/解锁宏定义与多核临界区防碰撞保护接口
+│   │   └── hardware.c              # 实现 WCH 底层硬件自旋锁的高效锁存控制与状态轮询
+│   ├── Core/                       # WCH 官方 RISC-V V5F 与 V3F 内核底层定义文件
+│   ├── Debug/                      # WCH 时钟源初始化逻辑与主核心功能选择宏 (Run_Core 运行标志)
+│   ├── Peripheral/                 # WCH 官方标准外设库驱动源码 (包含 GPIO, USART, TIM, SPI, ADC)
+│   └── Startup/                    # 汇编级双核系统初始化启动向量表文件 (.s)
 │
-├── V3F/                            # V3F 通信协处理器工程 (Core 0, 启动运行地址 0x00000000)
+├── V3F/                            # V3F 通信协处理器工程 (Core 0, 编译输出首地址 0x00000000)
 │   ├── User/
-│   │   ├── main.c                  # 通信核主循环、心跳自增、单核全功能运行兼容 logic
-│   │   └── ch32h417_it.c           # USART1/2/3/4/8 中断中断服务函数，专职路由与快速解析
-│   └── Comm/
-│       └── uart_router.c           # 多路串口引脚初始化配置及高效数字/坐标手动转换算法
+│   │   ├── main.c                  # 通信核主循环、多路外设硬件初始化、脱机心跳自增与手势/语音状态解析
+│   │   ├── ch32h417_it.c           # 串口 1/2/3/4/8 的高速中断服务例程 (ISR)，实现无阻塞快速数据解析
+│   │   ├── alarm.c / .h            # 单核备份：系统温湿度与烟雾气体异常阈值环境警报驱动
+│   │   ├── beep.c / .h             # 单核备份：有源蜂鸣器驱动函数 (高电平开启)
+│   │   ├── led.c / .h              # 单核备份：状态指示灯运行指示，提供 1Hz 工作心跳闪烁
+│   │   ├── sensor.c / .h           # 单核备份：火焰模拟传感器 (DO) 与气体 ADC 数据采集驱动
+│   │   ├── servo.c / .h            # 单核备份：TIM2 3通道 PWM 伺服舵机脉宽产生器
+│   │   ├── pid.c / .h              # 单核备份：传统数字式 PID 增量/位置控制器
+│   │   ├── tft180.c / .h           # 单核备份：ST7735 1.8英寸 SPI TFT 液晶显示屏幕底层驱动
+│   │   └── tft_chinese.c / .h      # 单核备份：中英文字体点阵字库渲染与液晶遥测 UI 面板框架
+│   ├── Comm/
+│   │   ├── uart_router.c / .h      # 多路串口引脚重映射配置、波特率初始化及 ASCII 浮点数解析映射
+│   │   └── bluetooth.c / .h        # 蓝牙模块驱动及脱机遥测诊断数据双向透传通信协议
+│   └── CH32H417QEU_V3F.wvproj      # MRS V3F 工程配置文件
 │
-├── V5F/                            # V5F 控制主处理器工程 (Core 1, 启动运行地址 0x00010000)
+├── V5F/                            # V5F 实时控制主处理器工程 (Core 1, 编译输出首地址 0x00010000)
+│   ├── User/
+│   │   ├── main.c                  # 控制主核主循环、20ms 控制滴答时钟分发、液晶状态更新与气体 ADC 轮询
+│   │   └── ch32h417_it.c           # 定时器中断处理程序，确保运动控制回路高稳定性物理硬实时
 │   ├── App/
-│   │   └── servo.c                 # TIM2 三通道高精度 PWM 配置与三段式阻尼速度收敛算法
-│   └── User/
-│       └── main.c                  # 主控制循环、20ms 控制任务分发、ST7735 TFT 驱动与遥测更新
+│   │   ├── servo.c / .h            # TIM2 3通道 PWM 高精度伺服、HSEM 原子数据抓取与三段式速度收敛算法
+│   │   └── pid.c / .h              # 数字 PID 位置和增量计算算法库
+│   ├── BSP/
+│   │   ├── alarm.c / .h            # 实时环境阈值报警驱动 (包含火焰和燃气气体状态监测)
+│   │   ├── beep.c / .h             # 板载有源蜂鸣器声光报警输出
+│   │   ├── led.c / .h              # V5F 主核心状态指示灯驱动
+│   │   ├── sensor.c / .h           # 12-bit ADC 烟雾、CO、天然气等多气体与火焰传感器模拟量读取
+│   │   ├── tft180.c / .h           # ST7735 1.8寸 TFT 液晶 SPI 屏底层驱动 (500ms 刷新周期)
+│   │   └── tft_chinese.c / .h      # 汉字字符图形库渲染与液晶 UI 系统状态遥测布局
+│   └── CH32H417QEU_V5F.wvproj      # MRS V5F 工程配置文件
 │
-├── Python/                         # 边缘视觉网关控制层
-│   ├── config.py                   # 端口分配 (COM9/COM10/COM27) 与通信波特率配置文件
-│   └── 识别.py                     # 基于 MediaPipe 简易手势识别的 PyQt 界面程序
+├── Python/                         # 上位机多模态配置与测试工具包
+│   ├── config.py                   # 串口端口号 (COM9/COM10/COM27) 及波特率配置 (全套上位机唯一需要修改的文件)
+│   └── 识别.py                     # 基于 MediaPipe 简易手势识别的 PyQt 调试验证程序
 │
-├── Gesture_recognition.py          # 高性能多模态网关程序 (InsightFace + MediaPipe Hands + 双级 EMA 滤波)
-├── merge_firmware.bat              # Windows 环境下固件 hex 地址物理对齐一键合并脚本
-└── merge_firmware.sh               # Linux/macOS 编译链下 DD 固件对齐对齐合并脚本
+├── docs/                           # 物理文档及说明资源文件夹
+│   └── system_architecture.png     # 系统双核异构协同物理架构流程图
+│
+├── CH32H417QEU.wvsln               # MounRiver Studio 双核整体解决方案描述文件 (双击一次性导入双核工程)
+├── Gesture_recognition.py          # 边缘视觉网关主程序 (InsightFace 人脸追踪 + MediaPipe Hands + 双级 EMA 滤波)
+├── merge_firmware.bat              # Windows 平台下 Hex/Bin 固件物理边界对齐一键合并脚本
+├── merge_firmware.sh               # Linux 平台下 DD 命令固件对齐对齐合并脚本
+├── voice_control.hd                # ASR-PRO 离线语音控制芯片音频播放语法与播报配置文本
+└── system_architecture.png         # 系统双核架构图 (拷贝至根目录，用于主页展示)
 ```

@@ -378,31 +378,62 @@ python Gesture_recognition.py
 
 ```text
 CH32H417-EdgeGimbal/
-├── Common/                         # Shared core headers and files
+├── Common/                         # Dual-core shared definitions, peripheral drivers and startup code
 │   ├── Common/
-│   │   ├── shared_gimbal.h         # Declares struct GimbalSharedData_t & GIMBAL_HSEM_ID (HSEM_ID0)
-│   │   ├── shared_gimbal.c         # Allocates variable gimbal_shared in section .shared_data
-│   │   └── gimbal_types.h          # Contains physical constraints & PID structs
-│   └── Debug/                      # Clock definitions and core configuration macros (Run_Core)
+│   │   ├── shared_gimbal.h         # Declares double-core shared struct GimbalSharedData_t & HSEM ID
+│   │   ├── shared_gimbal.c         # Allocates global variable `gimbal_shared` to link section `.shared_data`
+│   │   ├── gimbal_types.h          # Defines physical servo angle constraints, limits and PID structures
+│   │   ├── hardware.h              # HSEM mutex locking, unlocking, and hardware semaphore low-level APIs
+│   │   └── hardware.c              # Implementation of WCH hardware semaphore locking and peripheral checks
+│   ├── Core/                       # WCH Core-level libraries for RISC-V V5F and V3F
+│   ├── Debug/                      # Clock configuration and core-mode selection macro definitions (Run_Core)
+│   ├── Peripheral/                 # WCH Official Standard Peripheral Driver Libraries (GPIO, USART, TIM, SPI, ADC)
+│   └── Startup/                    # Assembly startup vector files (.s) for dual-core initialization
 │
 ├── V3F/                            # V3F Communication Co-processor project (Core 0, flashed at 0x00000000)
 │   ├── User/
-│   │   ├── main.c                  # Core 0 loop, heartbeat increment, and single-core backup logic
-│   │   └── ch32h417_it.c           # USART1/2/3/4/8 IRQ handlers for routing and parsing
-│   └── Comm/
-│       └── uart_router.c           # Pin configurations and manual ascii float conversion logic
+│   │   ├── main.c                  # Core 0 loop, hardware init, telemetry heartbeats, and commands parsing
+│   │   ├── ch32h417_it.c           # USART1/2/3/4/8 serial interrupt service routines (ISR) for fast parsing
+│   │   ├── alarm.c / .h            # Single-core backup: Environmental threshold alarm handler
+│   │   ├── beep.c / .h             # Single-core backup: Passive/Active buzzer trigger APIs
+│   │   ├── led.c / .h              # Single-core backup: System running heartbeat indicator LEDs
+│   │   ├── sensor.c / .h           # Single-core backup: ADC-based flame, gas and smoke sensor drivers
+│   │   ├── servo.c / .h            # Single-core backup: TIM2 PWM 3-channel servo physical movement resolver
+│   │   ├── pid.c / .h              # Single-core backup: Traditional location and velocity step PID solvers
+│   │   ├── tft180.c / .h           # Single-core backup: ST7735 1.8-inch SPI TFT display screen driver
+│   │   └── tft_chinese.c / .h      # Single-core backup: Font character renderer and telemetry UI layout
+│   ├── Comm/
+│   │   ├── uart_router.c / .h      # Multi-channel UART hardware initialization and fast coordinate mapping
+│   │   └── bluetooth.c / .h        # BLE module UART transmission protocols and debug telemetry report
+│   └── CH32H417QEU_V3F.wvproj      # MRS V3F project configuration file
 │
 ├── V5F/                            # V5F Real-time Control Main Core project (Core 1, flashed at 0x00010000)
+│   ├── User/
+│   │   ├── main.c                  # Core 1 loop, 20ms scheduler, ADC sampling trigger & TFT refresh
+│   │   └── ch32h417_it.c           # Timer interrupt service routine for periodic control tasks
 │   ├── App/
-│   │   └── servo.c                 # TIM2 3-channel PWM drivers and tri-velocity convergence
-│   └── User/
-│       └── main.c                  # Core 1 loop, 20ms scheduler, ST7735 screen refresh & ADC readings
+│   │   ├── servo.c / .h            # TIM2 3-channel PWM servo drivers, HSEM atomic read and adaptive resolver
+│   │   └── pid.c / .h              # Position-based and velocity-based digital PID algorithms
+│   ├── BSP/
+│   │   ├── alarm.c / .h            # Real-time environmental threshold alarm driver (flame & gas)
+│   │   ├── beep.c / .h             # Hardware active buzzer sound driver
+│   │   ├── led.c / .h              # V5F running LED status indicators
+│   │   ├── sensor.c / .h           # 12-bit ADC flame, CO and flammable gas sensor reader
+│   │   ├── tft180.c / .h           # ST7735 1.8" TFT SPI screen driver (500ms refreshing)
+│   │   └── tft_chinese.c / .h      # Chinese fonts lookup table and telemetry dashboard UI
+│   └── CH32H417QEU_V5F.wvproj      # MRS V5F project configuration file
 │
-├── Python/                         # Legacy PyQt Interface and COM configs
-│   ├── config.py                   # Port mappings (COM9/COM10/COM27) and baud rates
-│   └── 识别.py                     # PyQt-based MediaPipe test program
+├── Python/                         # Upper-computer configuration and testing folder
+│   ├── config.py                   # Port mappings (COM9/COM10/COM27) and baud rates settings (Only file to edit)
+│   └── 识别.py                     # Legacy PyQt-based MediaPipe test program (for single-module test)
 │
-├── Gesture_recognition.py          # Main Edge Vision gateway (InsightFace + MediaPipe + Two-stage EMA)
+├── docs/                           # Documentation resources folder
+│   └── system_architecture.png     # System architecture layout png image
+│
+├── CH32H417QEU.wvsln               # MounRiver Studio Dual-core Solution File (Double-click to load all projects)
+├── Gesture_recognition.py          # Main Edge Vision gateway (InsightFace + MediaPipe Hands + Two-stage EMA)
 ├── merge_firmware.bat              # Windows batch script for alignment-preserving binary merge
-└── merge_firmware.sh               # Linux shell script for alignment-preserving binary merge
+├── merge_firmware.sh               # Linux shell script for alignment-preserving binary merge
+├── voice_control.hd                # ASR-PRO Offline Voice Module speech syntax configuration script
+└── system_architecture.png         # Main system architecture layout image (copied to root)
 ```
