@@ -160,9 +160,9 @@ The Edge Vision Gateway runs a Python pipeline (`Gesture_recognition.py`) incorp
 * **Inference Speed Optimization**: Bounding box coordinates are processed using InsightFace's `buffalo_l` backbone. By scaling the input frames to `det_size=(320, 320)`, CPU detection latency is reduced 4-fold to **under 30ms per frame**, maintaining a steady 30FPS stream.
 * **Dual-Hand Safety Verification**: To prevent accidental tracking activation, the "5" gesture command (which enables face tracking) is accepted only if **both hands** display a "5" simultaneously in the camera frame.
 * **Scale-Invariant Gesture Filtering**: The finger detection threshold adapts to the hand size:
-  $$\text{margin} = \max(1.5, \text{hand\_scale} \times 0.08)$$
+  $$\text{margin} = \max(1.5, S_{\text{hand}} \times 0.08)$$
   Fingers are considered "raised" only if their tip-to-palm distance is less than $-\text{margin}$ (using `cv2.pointPolygonTest` against the hand's convex hull). The distinction between hand gesture "3" and "7" uses a scale-normalized threshold:
-  $$\text{Threshold}_{3/7} = 0.75 \times \text{hand\_scale}$$
+  $$\text{Threshold}_{3/7} = 0.75 \times S_{\text{hand}}$$
   This makes gesture recognition robust regardless of the hand's distance from the camera.
 * **IoU Tracking & Velocity-Based Extrapolation**: Faces are associated across frames using an intersection-over-union metric (threshold $\text{IoU} > 0.3$). If a face is briefly occluded, its position is predicted using an EMA-smoothed velocity vector:
   $$v_{k} = \alpha_{\text{v}} \cdot (p_{k} - p_{k-1}) + (1-\alpha_{\text{v}}) \cdot v_{k-1} \quad (\alpha_{\text{v}} = 0.6)$$
@@ -177,16 +177,16 @@ To eliminate servo hunting (high-frequency motor whining and heating) caused by 
    Smooths out high-frequency camera frame coordinates ($\alpha_{\text{input}} = 0.55$).
 2. **Physical Control Mapping and Hysteresis Dead Zone**:
    Pixel deviations map to target angles. If the target deviation falls within the dead zone, command updates are frozen:
-   $$tgt\_yaw = 175.0^\circ + \frac{\text{err\_x}}{320.0} \times 45.0^\circ \quad (\text{limited to } 140^\circ \sim 230^\circ)$$
-   $$tgt\_pitch = 75.0^\circ - \frac{\text{err\_y}}{240.0} \times 35.0^\circ \quad (\text{limited to } 40^\circ \sim 110^\circ)$$
-   $$\Delta\theta_{\text{output}} = \begin{cases} 
-   0, & |\Delta p| \le \text{DEAD\_ZONE} \quad (\text{DEAD\_ZONE\_X}=30\text{px}, \text{DEAD\_ZONE\_Y}=25\text{px}) \\
-   tgt - cmd_{\text{prev}}, & |\Delta p| > \text{DEAD\_ZONE}
+   $$\theta_{\text{tgt, yaw}} = 175.0^\circ + \frac{e_x}{320.0} \times 45.0^\circ \quad (\text{limited to } 140^\circ \sim 230^\circ)$$
+   $$\theta_{\text{tgt, pitch}} = 75.0^\circ - \frac{e_y}{240.0} \times 35.0^\circ \quad (\text{limited to } 40^\circ \sim 110^\circ)$$
+   $$\Delta\theta_{\text{out}} = \begin{cases} 
+   0, & |\Delta p| \le \text{DeadZone} \quad (\text{DeadZone}_x=30\text{px}, \text{DeadZone}_y=25\text{px}) \\
+   \theta_{\text{tgt}} - \theta_{\text{prev}}, & |\Delta p| > \text{DeadZone}
    \end{cases}$$
 3. **Stage 2 (Angle Command Smoothing at MCU)**:
    In the MCU control loop, the active commands are smoothed:
-   $$\theta_{\text{out\_yaw}}[k] = \theta_{\text{out\_yaw}}[k-1] + 0.45 \cdot (tgt\_yaw - \theta_{\text{out\_yaw}}[k-1])$$
-   $$\theta_{\text{out\_pitch}}[k] = \theta_{\text{out\_pitch}}[k-1] + 0.65 \cdot (tgt\_pitch - \theta_{\text{out\_pitch}}[k-1])$$
+   $$\theta_{\text{out, yaw}}[k] = \theta_{\text{out, yaw}}[k-1] + 0.45 \cdot (\theta_{\text{tgt, yaw}} - \theta_{\text{out, yaw}}[k-1])$$
+   $$\theta_{\text{out, pitch}}[k] = \theta_{\text{out, pitch}}[k-1] + 0.65 \cdot (\theta_{\text{tgt, pitch}} - \theta_{\text{out, pitch}}[k-1])$$
 
 ### 3. Three-Tier Adaptive Speed Convergence
 

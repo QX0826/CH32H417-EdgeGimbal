@@ -160,9 +160,9 @@ TIM_TimeBaseStructure.TIM_Prescaler = 40 - 1;
 * **人脸检测加速**：调用 InsightFace 的 `buffalo_l` 轻量化骨干网络，通过主动缩减输入检测框尺寸至 `det_size=(320, 320)`，在保障高检测精度的同时，将单帧 CPU 推理耗时降至 **30ms 以内**，跑满 30FPS 实时流。
 * **双手安全追踪校验**：为防止人脸追踪模式被误触，系统设定手势指令 "5"（开启人脸追踪）必须在左右**双手同时显示手势“5”**时才被确认为有效触发。单手触发或背景干扰将被算法自动过滤。
 * **手势分类自适应滤波**：手势 1-7 的判断引入了自适应手部尺寸缩放因子：
-  $$\text{margin} = \max(1.5, \text{hand\_scale} \times 0.08)$$
+  $$\text{margin} = \max(1.5, S_{\text{hand}} \times 0.08)$$
   通过 `cv2.pointPolygonTest` 计算指尖相对于手掌凸包的距离小于 $-\text{margin}$ 作为指尖“立起”的判定依据。手势 3 与 7 的区分阈值亦根据当前手部物理尺度进行归一化：
-  $$\text{Threshold}_{3/7} = 0.75 \times \text{hand\_scale}$$
+  $$\text{Threshold}_{3/7} = 0.75 \times S_{\text{hand}}$$
   从而完全消除了手部前后位移、离摄像头远近对分类准确率的干扰。
 * **IoU 锁定与运动外推预测**：系统基于检测框的重合度 IoU 做目标锁死判定（阈值 $\text{IoU} > 0.3$）。当目标发生瞬时遮挡或检测丢失时，网关根据前几帧解算出的速度矢量：
   $$v_{k} = \alpha_{\text{v}} \cdot (p_{k} - p_{k-1}) + (1-\alpha_{\text{v}}) \cdot v_{k-1} \quad (\alpha_{\text{v}} = 0.6)$$
@@ -177,16 +177,16 @@ TIM_TimeBaseStructure.TIM_Prescaler = 40 - 1;
    用于平滑网关端摄像头图像坐标的细微像素跳振（$\alpha_{\text{input}} = 0.55$）。
 2. **物理控制映射与非线性迟滞死区**：
    像素坐标根据光学中心偏差量按几何关系映射为目标角度偏差，当偏差值处于死区内时，控制命令冻结，直接消除抖动：
-   $$tgt\_yaw = 175.0^\circ + \frac{\text{err\_x}}{320.0} \times 45.0^\circ \quad (\text{限幅 } 140^\circ \sim 230^\circ)$$
-   $$tgt\_pitch = 75.0^\circ - \frac{\text{err\_y}}{240.0} \times 35.0^\circ \quad (\text{限幅 } 40^\circ \sim 110^\circ)$$
-   $$\Delta\theta_{\text{output}} = \begin{cases} 
-   0, & |\Delta p| \le \text{DEAD\_ZONE} \quad (\text{DEAD\_ZONE\_X}=30\text{px}, \text{DEAD\_ZONE\_Y}=25\text{px}) \\
-   tgt - cmd_{\text{prev}}, & |\Delta p| > \text{DEAD\_ZONE}
+   $$\theta_{\text{tgt, yaw}} = 175.0^\circ + \frac{e_x}{320.0} \times 45.0^\circ \quad (\text{限幅 } 140^\circ \sim 230^\circ)$$
+   $$\theta_{\text{tgt, pitch}} = 75.0^\circ - \frac{e_y}{240.0} \times 35.0^\circ \quad (\text{限幅 } 40^\circ \sim 110^\circ)$$
+   $$\Delta\theta_{\text{out}} = \begin{cases} 
+   0, & |\Delta p| \le \text{DeadZone} \quad (\text{DeadZone}_x=30\text{px}, \text{DeadZone}_y=25\text{px}) \\
+   \theta_{\text{tgt}} - \theta_{\text{prev}}, & |\Delta p| > \text{DeadZone}
    \end{cases}$$
 3. **第二级（主控输出级角度滤波）**：
    在死区之外，控制输出角度经过第二级滤波产生阻尼缓动：
-   $$\theta_{\text{out\_yaw}}[k] = \theta_{\text{out\_yaw}}[k-1] + 0.45 \cdot (tgt\_yaw - \theta_{\text{out\_yaw}}[k-1])$$
-   $$\theta_{\text{out\_pitch}}[k] = \theta_{\text{out\_pitch}}[k-1] + 0.65 \cdot (tgt\_pitch - \theta_{\text{out\_pitch}}[k-1])$$
+   $$\theta_{\text{out, yaw}}[k] = \theta_{\text{out, yaw}}[k-1] + 0.45 \cdot (\theta_{\text{tgt, yaw}} - \theta_{\text{out, yaw}}[k-1])$$
+   $$\theta_{\text{out, pitch}}[k] = \theta_{\text{out, pitch}}[k-1] + 0.65 \cdot (\theta_{\text{tgt, pitch}} - \theta_{\text{out, pitch}}[k-1])$$
 
 ### 3. 三段式步进速度自适应收敛算法
 
