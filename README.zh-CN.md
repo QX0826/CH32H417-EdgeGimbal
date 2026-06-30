@@ -394,6 +394,7 @@ CH32H417-EdgeGimbal/
 │   │   ├── ch32h417_it.c           # 串口 1/2/3/4/8 的高速中断服务例程 (ISR)，实现无阻塞快速数据解析
 │   │   ├── alarm.c / .h            # 单核备份：系统温湿度与烟雾气体异常阈值环境警报驱动
 │   │   ├── beep.c / .h             # 单核备份：有源蜂鸣器驱动函数 (高电平开启)
+│   │   ├── font.c / .h             # 单核备份：ASCII 与中文字符点阵字库渲染模块
 │   │   ├── led.c / .h              # 单核备份：状态指示灯运行指示，提供 1Hz 工作心跳闪烁
 │   │   ├── sensor.c / .h           # 单核备份：火焰模拟传感器 (DO) 与气体 ADC 数据采集驱动
 │   │   ├── servo.c / .h            # 单核备份：TIM2 3通道 PWM 伺服舵机脉宽产生器
@@ -403,6 +404,8 @@ CH32H417-EdgeGimbal/
 │   ├── Comm/
 │   │   ├── uart_router.c / .h      # 多路串口引脚重映射配置、波特率初始化及 ASCII 浮点数解析映射
 │   │   └── bluetooth.c / .h        # 蓝牙模块驱动及脱机遥测诊断数据双向透传通信协议
+│   ├── Ld/
+│   │   └── Link_v3f.ld             # V3F 链接脚本：将 V3F 固件映射至 Flash 首地址 0x00000000（最大 64 KB）
 │   └── CH32H417QEU_V3F.wvproj      # MRS V3F 工程配置文件
 │
 ├── V5F/                            # V5F 实时控制主处理器工程 (Core 1, 编译输出首地址 0x00010000)
@@ -415,15 +418,18 @@ CH32H417-EdgeGimbal/
 │   ├── BSP/
 │   │   ├── alarm.c / .h            # 实时环境阈值报警驱动 (包含火焰和燃气气体状态监测)
 │   │   ├── beep.c / .h             # 板载有源蜂鸣器声光报警输出
+│   │   ├── font.c / .h             # ASCII 与中文字符点阵字库渲染模块
 │   │   ├── led.c / .h              # V5F 主核心状态指示灯驱动
 │   │   ├── sensor.c / .h           # 12-bit ADC 烟雾、CO、天然气等多气体与火焰传感器模拟量读取
 │   │   ├── tft180.c / .h           # ST7735 1.8寸 TFT 液晶 SPI 屏底层驱动 (500ms 刷新周期)
 │   │   └── tft_chinese.c / .h      # 汉字字符图形库渲染与液晶 UI 系统状态遥测布局
+│   ├── Ld/
+│   │   └── Link_v5f.ld             # V5F 链接脚本：将 V5F 固件映射至 Flash 首地址 0x00010000（最大 128 KB）
 │   └── CH32H417QEU_V5F.wvproj      # MRS V5F 工程配置文件
 │
 ├── Python/                         # 上位机多模态配置与测试工具包
 │   ├── config.py                   # 串口端口号 (COM9/COM10/COM27) 及波特率配置（全套上位机唯一需要修改的文件）
-│   └── 识别.py                     # 基于 MediaPipe 简易手势识别的 PyQt 调试验证程序
+│   └── Gesture_recognition.py      # 单机独立运行版网关脚本，用于不连接硬件时的单模块调试验证
 │
 ├── CH32H417QEU.wvsln               # MounRiver Studio 双核整体解决方案文件（双击一次性导入全部工程）
 ├── Gesture_recognition.py          # 边缘视觉网关主程序（InsightFace 人脸追踪 + MediaPipe Hands + 双级 EMA 滤波）

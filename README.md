@@ -396,6 +396,7 @@ CH32H417-EdgeGimbal/
 │   │   ├── ch32h417_it.c           # USART1/2/3/4/8 serial interrupt service routines (ISR) for fast parsing
 │   │   ├── alarm.c / .h            # Single-core backup: Environmental threshold alarm handler
 │   │   ├── beep.c / .h             # Single-core backup: Passive/Active buzzer trigger APIs
+│   │   ├── font.c / .h             # Single-core backup: ASCII & Chinese character dot-matrix font library
 │   │   ├── led.c / .h              # Single-core backup: System running heartbeat indicator LEDs
 │   │   ├── sensor.c / .h           # Single-core backup: ADC-based flame, gas and smoke sensor drivers
 │   │   ├── servo.c / .h            # Single-core backup: TIM2 PWM 3-channel servo physical movement resolver
@@ -405,6 +406,8 @@ CH32H417-EdgeGimbal/
 │   ├── Comm/
 │   │   ├── uart_router.c / .h      # Multi-channel UART hardware initialization and fast coordinate mapping
 │   │   └── bluetooth.c / .h        # BLE module UART transmission protocols and debug telemetry report
+│   ├── Ld/
+│   │   └── Link_v3f.ld             # V3F linker script: maps V3F firmware to Flash origin 0x00000000 (max 64 KB)
 │   └── CH32H417QEU_V3F.wvproj      # MRS V3F project configuration file
 │
 ├── V5F/                            # V5F Real-time Control Main Core project (Core 1, flashed at 0x00010000)
@@ -417,15 +420,18 @@ CH32H417-EdgeGimbal/
 │   ├── BSP/
 │   │   ├── alarm.c / .h            # Real-time environmental threshold alarm driver (flame & gas)
 │   │   ├── beep.c / .h             # Hardware active buzzer sound driver
+│   │   ├── font.c / .h             # ASCII & Chinese character dot-matrix font library
 │   │   ├── led.c / .h              # V5F running LED status indicators
 │   │   ├── sensor.c / .h           # 12-bit ADC flame, CO and flammable gas sensor reader
 │   │   ├── tft180.c / .h           # ST7735 1.8" TFT SPI screen driver (500ms refreshing)
 │   │   └── tft_chinese.c / .h      # Chinese fonts lookup table and telemetry dashboard UI
+│   ├── Ld/
+│   │   └── Link_v5f.ld             # V5F linker script: maps V5F firmware to Flash origin 0x00010000 (max 128 KB)
 │   └── CH32H417QEU_V5F.wvproj      # MRS V5F project configuration file
 │
 ├── Python/                         # Upper-computer configuration and testing folder
 │   ├── config.py                   # Port mappings (COM9/COM10/COM27) and baud rates — only file to edit
-│   └── 识别.py                     # Legacy PyQt-based MediaPipe single-module test program
+│   └── Gesture_recognition.py      # Standalone gateway script for single-PC testing without hardware
 │
 ├── CH32H417QEU.wvsln               # MounRiver Studio dual-core solution file (open to load both projects)
 ├── Gesture_recognition.py          # Main edge vision gateway (InsightFace + MediaPipe Hands + two-stage EMA)
