@@ -422,16 +422,15 @@ CH32H417-EdgeGimbal/
 │   └── CH32H417QEU_V5F.wvproj      # MRS V5F 工程配置文件
 │
 ├── Python/                         # 上位机多模态配置与测试工具包
-│   ├── config.py                   # 串口端口号 (COM9/COM10/COM27) 及波特率配置 (全套上位机唯一需要修改的文件)
+│   ├── config.py                   # 串口端口号 (COM9/COM10/COM27) 及波特率配置（全套上位机唯一需要修改的文件）
 │   └── 识别.py                     # 基于 MediaPipe 简易手势识别的 PyQt 调试验证程序
 │
-├── docs/                           # 物理文档及说明资源文件夹
-│   └── system_architecture.png     # 系统双核异构协同物理架构流程图
-│
-├── CH32H417QEU.wvsln               # MounRiver Studio 双核整体解决方案描述文件 (双击一次性导入双核工程)
-├── Gesture_recognition.py          # 边缘视觉网关主程序 (InsightFace 人脸追踪 + MediaPipe Hands + 双级 EMA 滤波)
-├── merge_firmware.bat              # Windows 平台下 Hex/Bin 固件物理边界对齐一键合并脚本
-├── merge_firmware.sh               # Linux 平台下 DD 命令固件对齐对齐合并脚本
-├── voice_control.hd                # ASR-PRO 离线语音控制芯片音频播放语法与播报配置文本
-└── system_architecture.png         # 系统双核架构图 (拷贝至根目录，用于主页展示)
+├── CH32H417QEU.wvsln               # MounRiver Studio 双核整体解决方案文件（双击一次性导入全部工程）
+├── Gesture_recognition.py          # 边缘视觉网关主程序（InsightFace 人脸追踪 + MediaPipe Hands + 双级 EMA 滤波）
+├── merge_firmware.bat              # Windows 平台下双核固件物理边界对齐一键合并脚本
+├── merge_firmware.sh               # Linux/macOS 平台下固件对齐合并脚本
+├── voice_control.hd                # ASR-PRO 离线语音控制芯片语音语法与 TTS 播报配置文本
+├── system_architecture.png         # 系统双核异构架构图（嵌入主页 README）
+├── LICENSE                         # MIT 开源许可证
+└── .gitignore                      # Git 忽略规则（排除编译产物、obj/、.mrs/、IDE 元数据）
 ```

@@ -424,16 +424,15 @@ CH32H417-EdgeGimbal/
 │   └── CH32H417QEU_V5F.wvproj      # MRS V5F project configuration file
 │
 ├── Python/                         # Upper-computer configuration and testing folder
-│   ├── config.py                   # Port mappings (COM9/COM10/COM27) and baud rates settings (Only file to edit)
-│   └── 识别.py                     # Legacy PyQt-based MediaPipe test program (for single-module test)
+│   ├── config.py                   # Port mappings (COM9/COM10/COM27) and baud rates — only file to edit
+│   └── 识别.py                     # Legacy PyQt-based MediaPipe single-module test program
 │
-├── docs/                           # Documentation resources folder
-│   └── system_architecture.png     # System architecture layout png image
-│
-├── CH32H417QEU.wvsln               # MounRiver Studio Dual-core Solution File (Double-click to load all projects)
-├── Gesture_recognition.py          # Main Edge Vision gateway (InsightFace + MediaPipe Hands + Two-stage EMA)
-├── merge_firmware.bat              # Windows batch script for alignment-preserving binary merge
-├── merge_firmware.sh               # Linux shell script for alignment-preserving binary merge
-├── voice_control.hd                # ASR-PRO Offline Voice Module speech syntax configuration script
-└── system_architecture.png         # Main system architecture layout image (copied to root)
+├── CH32H417QEU.wvsln               # MounRiver Studio dual-core solution file (open to load both projects)
+├── Gesture_recognition.py          # Main edge vision gateway (InsightFace + MediaPipe Hands + two-stage EMA)
+├── merge_firmware.bat              # Windows batch script for alignment-preserving dual-core binary merge
+├── merge_firmware.sh               # Linux/macOS shell script for alignment-preserving dual-core binary merge
+├── voice_control.hd                # ASR-PRO offline voice module speech grammar and TTS configuration
+├── system_architecture.png         # System dual-core heterogeneous architecture diagram (embedded in README)
+├── LICENSE                         # MIT open source license
+└── .gitignore                      # Git ignore rules (excludes build outputs, obj/, .mrs/, IDE metadata)
 ```
