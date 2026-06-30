@@ -180,7 +180,7 @@ To eliminate servo hunting (high-frequency motor whining and heating) caused by 
    $$\theta_{\text{tgt, yaw}} = 175.0^\circ + \frac{e_x}{320.0} \times 45.0^\circ \quad (\text{limited to } 140^\circ \sim 230^\circ)$$
    $$\theta_{\text{tgt, pitch}} = 75.0^\circ - \frac{e_y}{240.0} \times 35.0^\circ \quad (\text{limited to } 40^\circ \sim 110^\circ)$$
    $$\Delta\theta_{\text{out}} = \begin{cases} 
-   0, & |\Delta p| \le \text{DeadZone} \quad (\text{DeadZone}_x=30\text{px}, \text{DeadZone}_y=25\text{px}) \\
+   0, & |\Delta p| \le \text{DeadZone} \quad (\text{DeadZone}_x=30\text{px}, \text{DeadZone}_y=25\text{px}) \\\\
    \theta_{\text{tgt}} - \theta_{\text{prev}}, & |\Delta p| > \text{DeadZone}
    \end{cases}$$
 3. **Stage 2 (Angle Command Smoothing at MCU)**:
@@ -193,8 +193,8 @@ To eliminate servo hunting (high-frequency motor whining and heating) caused by 
 To minimize servo overshoot and gear chatter, the gimbal controller uses a tri-velocity step-down convergence strategy instead of standard integral PID controllers:
 
 $$\Delta\theta = \begin{cases} 
-\dfrac{e[k]}{2}, & |e[k]| > 20^\circ \quad \text{(Large error: Binary fast pursuit)} \\[6pt] 
-\dfrac{e[k]}{3}, & 5^\circ < |e[k]| \le 20^\circ \quad \text{(Medium error: Damped deceleration)} \\[6pt] 
+\dfrac{e[k]}{2}, & |e[k]| > 20^\circ \quad \text{(Large error: Binary fast pursuit)} \\\\
+\dfrac{e[k]}{3}, & 5^\circ < |e[k]| \le 20^\circ \quad \text{(Medium error: Damped deceleration)} \\\\
 0.1^\circ \cdot \text{sgn}(e[k]), & 0^\circ < |e[k]| \le 5^\circ \quad \text{(Small error: 0.1° step convergence)} 
 \end{cases}$$
 
